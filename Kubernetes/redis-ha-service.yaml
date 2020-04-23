@@ -1,0 +1,112 @@
+# Service for first pod
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-ha-0
+  labels:
+    app: redis-ha
+  annotations:
+    service.alpha.kubernetes.io/tolerate-unready-endpoints: 'true'
+spec:
+  publishNotReadyAddresses: true
+  ports:
+    - name: server
+      port: 6379
+      protocol: TCP
+      targetPort: redis
+    - name: sentinel
+      port: 26379
+      protocol: TCP
+      targetPort: sentinel
+  selector:
+    app: redis-ha
+    'statefulset.kubernetes.io/pod-name': redis-ha-0
+---
+# Service for second pod
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-ha-1
+  labels:
+    app: redis-ha
+  annotations:
+    service.alpha.kubernetes.io/tolerate-unready-endpoints: 'true'
+spec:
+  publishNotReadyAddresses: true
+  ports:
+    - name: server
+      port: 6379
+      protocol: TCP
+      targetPort: redis
+    - name: sentinel
+      port: 26379
+      protocol: TCP
+      targetPort: sentinel
+  selector:
+    app: redis-ha
+    'statefulset.kubernetes.io/pod-name': redis-ha-1
+---
+# Service for third pod
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-ha-2
+  labels:
+    app: redis-ha
+  annotations:
+    service.alpha.kubernetes.io/tolerate-unready-endpoints: 'true'
+spec:
+  publishNotReadyAddresses: true
+  ports:
+    - name: server
+      port: 6379
+      protocol: TCP
+      targetPort: redis
+    - name: sentinel
+      port: 26379
+      protocol: TCP
+      targetPort: sentinel
+  selector:
+    app: redis-ha
+    'statefulset.kubernetes.io/pod-name': redis-ha-2
+---
+# Headless service
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-ha
+  labels:
+    app: redis-ha
+spec:
+  clusterIP: None
+  ports:
+    - name: server
+      port: 6379
+      protocol: TCP
+      targetPort: redis
+    - name: sentinel
+      port: 26379
+      protocol: TCP
+      targetPort: sentinel
+  selector:
+    app: redis-ha
+---
+# External Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-ha-external
+spec:
+  externalTrafficPolicy: Local
+  ports:
+    - name: server
+      port: 6379
+      protocol: TCP
+      targetPort: redis
+    - name: sentinel
+      port: 26379
+      protocol: TCP
+      targetPort: sentinel
+  selector:
+    app: redis-ha
+  type: NodePort

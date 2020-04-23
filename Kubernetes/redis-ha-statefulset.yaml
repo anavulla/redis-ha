@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis-ha
+spec:
+  replicas: 3
+  serviceName: redis-ha
+  selector:
+    matchLabels:
+      app: redis-ha
+  template:
+    metadata:
+      name: redis-ha
+      labels:
+        app: redis-ha
+    spec:
+      imagePullSecrets:
+      - name: regsecret
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  app: redis-ha
+              topologyKey: kubernetes.io/hostname
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app:  redis-ha
+                topologyKey: failure-domain.beta.kubernetes.io/zone
+      containers:
+      - name: server
+        image: <DOCKER_IMAGE:TAG>
+        imagePullPolicy: Always
+        resources:
+          limits:
+            memory: 500Mi
+        ports:
+        - name: redis
+          containerPort: 6379
+        env:
+        - name: "REDIS_PASSWORD"
+          valueFrom:
+            secretKeyRef:
+              name: redis-credentials
+              key: password
+        volumeMounts:
+          - name: redis-data
+            mountPath: /redis-ha/redis-data
+      - name: sentinel
+        image: <DOCKER_IMAGE:TAG>
+        imagePullPolicy: Always
+        resources:
+          limits:
+            memory: 500Mi
+        ports:
+          - name: sentinel
+            containerPort: 26379
+        env:
+        - name: "REDIS_PASSWORD"
+          valueFrom:
+            secretKeyRef:
+              name: redis-credentials
+              key: password
+        - name: SENTINEL
+          value: "true"
+      volumes:
+      - name: redis-data
+        persistentVolumeClaim:
+          claimName: redis-data-volume-claim
